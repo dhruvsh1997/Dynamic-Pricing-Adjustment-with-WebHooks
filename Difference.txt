@@ -1,0 +1,56 @@
+The primary difference is that some methods have more inherent security risks or require more custom security work than others. 
+Security overview by method
+Method 	Security Foundation	Key Vulnerabilities	Security Measures Needed
+HTTP Request (REST API)	HTTPS (TLS) encryption is foundational and mandatory for security.	Excessive Data Exposure: The API returns more information than the client needs, exposing sensitive data.
+Broken Authentication: Flaws in how authentication tokens are managed can lead to account takeovers.
+Injection Attacks: Untrusted user input can be exploited to execute malicious commands.	For all API calls:
+• Use HTTPS exclusively.
+• Implement authentication with short-lived tokens and refresh tokens.
+• Enforce authorization rules on every request.
+• Validate and sanitize all inputs.
+API Polling (over HTTP)	Inherits the security of the underlying HTTP requests and the API endpoint being polled.	DoS/DDoS Attacks: Frequent, automated polling can be exploited to overwhelm the server with requests.
+Data Exposure: Polling can be less efficient than event-driven methods and may increase the chance of data exposure if not properly secured.	In addition to HTTP best practices:
+• Implement strict rate limiting to prevent abuse.
+• Require authentication for every request.
+• Keep the API inventory and documentation strictly maintained to avoid "shadow APIs".
+Webhooks	Secure via HTTPS and HMAC signatures, which verify the message came from a trusted sender and was not tampered with.	Request Forgery (SSRF): A malicious actor can trick the server into sending the webhook to an internal endpoint.
+Replay Attacks: An attacker intercepts and resends a legitimate webhook message.
+Endpoint Vulnerabilities: Webhook URLs are public-facing, making them potential targets for injection attacks.	For all webhook endpoints:
+• Use HTTPS exclusively.
+• Validate the webhook with a signature (HMAC) and a shared secret.
+• Add timestamps to messages to prevent replay attacks.
+• Restrict the IP addresses that can send requests.
+WebSockets	Secured with the WSS protocol, the equivalent of HTTPS for WebSockets, which uses TLS encryption.	Cross-Site WebSocket Hijacking (CSWH): An attacker on a different site can make a WebSocket connection using a user's session cookies.
+Missing Authentication: Because authentication is not part of the native protocol, developers can forget to enforce checks on every message.
+Injection Attacks: Lack of input validation can open the door to classic injection vulnerabilities.	For all WebSocket connections:
+• Use the wss:// protocol.
+• Validate the Origin header during the handshake.
+• Require token-based authentication for the initial handshake.
+• Authorize every message sent through the connection.
+Server-Sent Events (SSE)	Since SSE is based on HTTP, its security foundation is the HTTPS protocol, which provides TLS encryption.	Man-in-the-Middle (MitM): If not using HTTPS, an attacker can intercept the plaintext stream.
+Authentication Issues: Similar to WebSockets, the continuous nature of the connection requires careful handling of session authentication.	For all SSE streams:
+• Always use HTTPS.
+• Validate session and authentication on initial connection.
+• Handle errors and reconnections securely.
+Which is right for you?
+The best choice depends on your specific use case, data sensitivity, and control over both client and server applications.
+Use HTTP Requests for:
+Standard, non-real-time client-to-server communication, such as retrieving a resource.
+APIs where you have full control over the authentication and validation. 
+Use API Polling for:
+Infrequent updates from an API that doesn't need to be immediate.
+Integrating with legacy systems or third-party APIs that don't offer event-driven alternatives like webhooks. 
+Use Webhooks for:
+Event-driven server-to-server communication.
+When you need real-time notifications from a third-party service, such as a payment processor. 
+Use WebSockets or SSE for:
+Real-time applications that require a continuous, low-latency stream of data.
+WebSockets are ideal for bidirectional (client and server) communication like live chat or multiplayer gaming.
+SSE is simpler and better suited for unidirectional, server-to-client events like live sports scores or stock market updates. 
+
+
+uvicorn main:app --host 0.0.0.0 --port 7536 --reload
+
+curl -X POST http://localhost:8000/webhook/market-update \
+  -H "Content-Type: application/json" \
+  -d '{"product_id": "product1"}'
