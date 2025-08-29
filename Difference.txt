@@ -48,7 +48,7 @@ Real-time applications that require a continuous, low-latency stream of data.
 WebSockets are ideal for bidirectional (client and server) communication like live chat or multiplayer gaming.
 SSE is simpler and better suited for unidirectional, server-to-client events like live sports scores or stock market updates. 
 
-
+#Execution
 uvicorn main:app --host 0.0.0.0 --port 7536 --reload
 
 curl -X POST http://localhost:8000/webhook/market-update \
